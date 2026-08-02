@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InfluencerStatus {
+  NEW
+  CONTACTED
+  REPLIED
+  INTERESTED
+  DECLINED
+  CUSTOMER
+}
+
+enum MessageChannel {
+  EMAIL
+  INSTAGRAM
+}
+
+enum MessageDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum MessageStatus {
+  DRAFT
+  PENDING_APPROVAL
+  SENT
+  FAILED
+  REPLIED
+}
+
+model Influencer {
+  id              String            @id @default(cuid())
+  name            String
+  instagramHandle String?
+  email           String?
+  niche           String?
+  followerCount   Int?
+  status          InfluencerStatus  @default(NEW)
+  notes           String?
+  source          String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  messages        Message[]
+
+  @@index([status])
+  @@index([email])
+}
+
+model Message {
+  id           String            @id @default(cuid())
+  influencerId String
+  influencer   Influencer        @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  channel      MessageChannel
+  direction    MessageDirection
+  subject      String?
+  body         String
+  status       MessageStatus     @default(DRAFT)
+  externalId   String?
+  sentAt       DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([influencerId])
+  @@index([channel, status])
+}
+
+model Template {
+  id            String         @id @default(cuid())
+  name          String
+  channel       MessageChannel
+  subject       String?
+  bodyTemplate  String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
