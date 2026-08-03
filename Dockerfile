@@ -16,4 +16,6 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY package.json ./
 EXPOSE 3000
-CMD ["node", "dist/server.js"]
+# migrate deploy vor jedem start, damit neue migrationen automatisch in prod ankommen
+# statt manuell nachgezogen werden zu müssen
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]

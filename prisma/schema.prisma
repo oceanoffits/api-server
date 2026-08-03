@@ -80,3 +80,15 @@ model Template {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
+
+// archiv aller KI-recherche-läufe, unabhängig von Influencer-datensätzen -
+// bleibt erhalten auch wenn ein daraus angelegter Influencer wieder gelöscht wird
+model ResearchResult {
+  id           String   @id @default(cuid())
+  niche        String
+  campaignGoal String?
+  suggestions  Json
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}

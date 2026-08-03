@@ -10,6 +10,9 @@ const envSchema = z.object({
   // optional: instagram dm versand läuft erst, wenn diese gesetzt sind (siehe services/instagram.ts)
   INSTAGRAM_ACCESS_TOKEN: z.string().min(1).optional(),
   INSTAGRAM_BUSINESS_ACCOUNT_ID: z.string().min(1).optional(),
+  // optional: einfaches login-passwort fürs web-ui, tauscht sich gegen API_BEARER_TOKEN
+  // (siehe routes/auth.ts) - ohne diesen wert bleibt /auth/login deaktiviert statt zu crashen
+  APP_LOGIN_PASSWORD: z.string().min(1).optional(),
   PORT: z.coerce.number().default(3000),
 });
 
