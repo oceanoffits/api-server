@@ -5,6 +5,7 @@ import { requireBearerAuth } from "./auth.js";
 import { influencerRoutes } from "./routes/influencers.js";
 import { messageRoutes } from "./routes/messages.js";
 import { webhookRoutes } from "./routes/webhooks.js";
+import { researchRoutes } from "./routes/research.js";
 
 const app = Fastify({ logger: true });
 
@@ -19,6 +20,7 @@ await app.register(async (protectedApp) => {
   protectedApp.addHook("preHandler", requireBearerAuth);
   await protectedApp.register(influencerRoutes);
   await protectedApp.register(messageRoutes);
+  await protectedApp.register(researchRoutes);
 });
 
 app.listen({ port: env.PORT, host: "0.0.0.0" }).catch((err) => {
