@@ -34,7 +34,7 @@ export async function draftOutreachMessage(params: {
 
   const response = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: 500,
+    max_tokens: 1024,
     messages: [
       {
         role: "user",
@@ -55,6 +55,15 @@ Antworte NUR mit einem JSON-Objekt der Form ${channel === "EMAIL" ? '{"subject":
     throw new Error("Claude hat keinen Text zurückgegeben");
   }
 
-  const parsed = JSON.parse(textBlock.text);
+  if (response.stop_reason === "max_tokens") {
+    throw new Error("Claude-Antwort wurde wegen max_tokens abgeschnitten");
+  }
+
+  let parsed: { subject?: string; body: string };
+  try {
+    parsed = JSON.parse(textBlock.text);
+  } catch {
+    throw new Error(`Claude hat kein valides JSON zurückgegeben: ${textBlock.text}`);
+  }
   return { subject: parsed.subject, body: parsed.body };
 }
