@@ -14,6 +14,7 @@ const influencerStatusValues = [
 const createInfluencerSchema = z.object({
   name: z.string().min(1),
   instagramHandle: z.string().optional(),
+  instagramUserId: z.string().optional(),
   email: z.string().email().optional(),
   niche: z.string().optional(),
   followerCount: z.number().int().nonnegative().optional(),

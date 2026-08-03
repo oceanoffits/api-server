@@ -7,6 +7,8 @@ const envSchema = z.object({
   RESEND_FROM_EMAIL: z.string().min(1),
   RESEND_INBOUND_SECRET: z.string().min(8),
   ANTHROPIC_API_KEY: z.string().min(1),
+  INSTAGRAM_ACCESS_TOKEN: z.string().min(1),
+  INSTAGRAM_BUSINESS_ACCOUNT_ID: z.string().min(1),
   PORT: z.coerce.number().default(3000),
 });
 

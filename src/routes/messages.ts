@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../db/client.js";
 import { draftOutreachMessage } from "../services/anthropic.js";
 import { sendEmail } from "../services/resend.js";
+import { sendInstagramDM } from "../services/instagram.js";
 
 const channelSchema = z.enum(["EMAIL", "INSTAGRAM"]);
 
@@ -82,7 +83,7 @@ export async function messageRoutes(app: FastifyInstance) {
     return message;
   });
 
-  // E-Mail tatsächlich versenden (Instagram wird manuell versendet, siehe mark-sent)
+  // E-Mail oder Instagram DM versenden
   app.post("/messages/:id/send", async (request, reply) => {
     const { id } = z.object({ id: z.string() }).parse(request.params);
 
@@ -94,36 +95,65 @@ export async function messageRoutes(app: FastifyInstance) {
     if (!message) {
       return reply.code(404).send({ error: "not_found" });
     }
-    if (message.channel !== "EMAIL") {
-      return reply.code(400).send({ error: "only_email_can_be_sent_via_api" });
+
+    if (message.channel === "EMAIL") {
+      if (!message.influencer.email) {
+        return reply.code(400).send({ error: "influencer_has_no_email" });
+      }
+
+      try {
+        const result = await sendEmail({
+          to: message.influencer.email,
+          subject: message.subject ?? "Kooperation mit Ocean Office",
+          body: message.body,
+        });
+
+        const updated = await prisma.message.update({
+          where: { id },
+          data: { status: "SENT", sentAt: new Date(), externalId: result?.id },
+        });
+
+        await prisma.influencer.update({
+          where: { id: message.influencerId },
+          data: { status: "CONTACTED" },
+        });
+
+        return updated;
+      } catch (err) {
+        await prisma.message.update({ where: { id }, data: { status: "FAILED" } });
+        request.log.error(err);
+        return reply.code(502).send({ error: "email_send_failed" });
+      }
+    } else if (message.channel === "INSTAGRAM") {
+      if (!message.influencer.instagramUserId) {
+        return reply.code(400).send({ error: "influencer_has_no_instagram_user_id" });
+      }
+
+      try {
+        const externalId = await sendInstagramDM({
+          recipientUserId: message.influencer.instagramUserId,
+          messageText: message.body,
+        });
+
+        const updated = await prisma.message.update({
+          where: { id },
+          data: { status: "SENT", sentAt: new Date(), externalId },
+        });
+
+        await prisma.influencer.update({
+          where: { id: message.influencerId },
+          data: { status: "CONTACTED" },
+        });
+
+        return updated;
+      } catch (err) {
+        await prisma.message.update({ where: { id }, data: { status: "FAILED" } });
+        request.log.error(err);
+        return reply.code(502).send({ error: "instagram_send_failed" });
+      }
     }
-    if (!message.influencer.email) {
-      return reply.code(400).send({ error: "influencer_has_no_email" });
-    }
 
-    try {
-      const result = await sendEmail({
-        to: message.influencer.email,
-        subject: message.subject ?? "Kooperation mit Ocean Office",
-        body: message.body,
-      });
-
-      const updated = await prisma.message.update({
-        where: { id },
-        data: { status: "SENT", sentAt: new Date(), externalId: result?.id },
-      });
-
-      await prisma.influencer.update({
-        where: { id: message.influencerId },
-        data: { status: "CONTACTED" },
-      });
-
-      return updated;
-    } catch (err) {
-      await prisma.message.update({ where: { id }, data: { status: "FAILED" } });
-      request.log.error(err);
-      return reply.code(502).send({ error: "email_send_failed" });
-    }
+    return reply.code(400).send({ error: "unsupported_channel" });
   });
 
   // Instagram (oder E-Mail) manuell als gesendet markieren

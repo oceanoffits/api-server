@@ -35,18 +35,19 @@ enum MessageStatus {
 }
 
 model Influencer {
-  id              String            @id @default(cuid())
-  name            String
-  instagramHandle String?
-  email           String?
-  niche           String?
-  followerCount   Int?
-  status          InfluencerStatus  @default(NEW)
-  notes           String?
-  source          String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  messages        Message[]
+  id                    String            @id @default(cuid())
+  name                  String
+  instagramHandle       String?
+  instagramUserId       String?           // instagram graph api user id
+  email                 String?
+  niche                 String?
+  followerCount         Int?
+  status                InfluencerStatus  @default(NEW)
+  notes                 String?
+  source                String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  messages              Message[]
 
   @@index([status])
   @@index([email])
