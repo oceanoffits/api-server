@@ -21,6 +21,12 @@ export async function sendInstagramDM(payload: InstagramDMPayload): Promise<stri
     throw new Error("instagram: recipientUserId is required (store instagram user id on influencer)");
   }
 
+  if (!env.INSTAGRAM_ACCESS_TOKEN || !env.INSTAGRAM_BUSINESS_ACCOUNT_ID) {
+    throw new Error(
+      "instagram: INSTAGRAM_ACCESS_TOKEN / INSTAGRAM_BUSINESS_ACCOUNT_ID nicht konfiguriert"
+    );
+  }
+
   const url = `https://graph.instagram.com/v21.0/${env.INSTAGRAM_BUSINESS_ACCOUNT_ID}/messages`;
 
   const response = await fetch(url, {
